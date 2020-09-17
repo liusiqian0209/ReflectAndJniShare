@@ -1,4 +1,4 @@
-package cn.liusiqian.reflectandjnishare;
+package cn.liusiqian.reflectdemo;
 
 import org.junit.Test;
 
