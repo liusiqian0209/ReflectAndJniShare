@@ -7,6 +7,9 @@ public class SubModel extends BaseModel {
     TAG = "SubModel";
   }
 
+  public static final String STATIC_FINAL_CONST = "STATIC_FINAL_CONST";
+  private final String NON_STATIC_FINAL_CONST = "NON_STATIC_FINAL_CONST";
+
   private static void subStaticMethod() {
     Log.d(TAG, "call sub static method");
   }
@@ -25,6 +28,23 @@ public class SubModel extends BaseModel {
 
   void subPackagePrivateMethod() {
     Log.d(TAG, "call sub package-private Method");
+  }
+
+  private String subVariableParamMethod(int split, String... args) {
+    if (args == null || args.length == 0) {
+      return "";
+    }
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < args.length - 1; i++) {
+      sb.append(args[i]).append("_").append(split).append("_");
+    }
+    sb.append(args[args.length - 1]);
+
+    return sb.toString();
+  }
+
+  public String getNonStaticFinalConst() {
+    return NON_STATIC_FINAL_CONST;
   }
 
   @Override

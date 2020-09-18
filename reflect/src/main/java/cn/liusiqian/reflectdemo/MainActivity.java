@@ -1,9 +1,11 @@
 package cn.liusiqian.reflectdemo;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -18,7 +20,9 @@ public class MainActivity extends AppCompatActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 //    testGetMethods();
-    callStaticAndAbstract();
+//    callStaticAndAbstract();
+//    callVariableParam();
+    setValueForFinalField();
   }
 
   /**
@@ -71,10 +75,75 @@ public class MainActivity extends AppCompatActivity {
       absMethod.setAccessible(true);
       absMethod.invoke(new BaseModel());
       absMethod.invoke(new SubModel());
-    } catch (NoSuchMethodException  | IllegalAccessException | InvocationTargetException e) {
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
       e.printStackTrace();
     }
+  }
 
+  /**
+   * 如何通过反射调用有可变参数的方法？
+   */
+  private void callVariableParam() {
+    Method[] methods = SubModel.class.getDeclaredMethods();
+    Method searchMethod = null;
+    if (methods.length > 0) {
+      for (int i = 0; i < methods.length; i++) {
+        searchMethod = methods[i];
+        if (TextUtils.equals("subVariableParamMethod", searchMethod.getName())) {
+          break;
+        }
+      }
+    }
+    if (searchMethod != null) {
+      log("found subVariableParamMethod");
+      Class retTypeCls = searchMethod.getReturnType();
+      Class[] paramTypeCls = searchMethod.getParameterTypes();
+      log("return type:" + retTypeCls.getSimpleName());
+      for (int i = 0; i < paramTypeCls.length; i++) {
+        log("param" + i + " type:" + paramTypeCls[i].getSimpleName());
+      }
+
+      // call
+      searchMethod.setAccessible(true);
+      try {
+        // crash!
+        // java.lang.IllegalArgumentException: Wrong number of arguments; expected 2, got 4
+//        Object result = searchMethod.invoke(new SubModel(), 12, "abc", "def", "ghi");
+
+        // 正确调用方式
+        Object result = searchMethod.invoke(new SubModel(), 12, new String[]{"abc", "def", "ghi"});
+        if (result != null) {
+          log("result:" + result);
+        }
+      } catch (IllegalAccessException | InvocationTargetException e) {
+        e.printStackTrace();
+      }
+
+    }
+  }
+
+  /**
+   * 类中用final声明的变量所对应的Field对象，可以通过调用setAccessible方法，随后为它设置一个新的值吗？
+   */
+  private void setValueForFinalField() {
+    try {
+      Field field = SubModel.class.getDeclaredField("STATIC_FINAL_CONST");
+      field.setAccessible(true);
+      field.set(null, "new static final value");
+      Object result  = field.get(null);
+      log("result after set:" + result);
+      log("origin field:" + SubModel.STATIC_FINAL_CONST);
+
+      field = SubModel.class.getDeclaredField("NON_STATIC_FINAL_CONST");
+      field.setAccessible(true);
+      SubModel model = new SubModel();
+      field.set(model, "new non-static final value");
+      result  = field.get(model);
+      log("result after set:" + result);
+      log("origin field:" + model.getNonStaticFinalConst());
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      e.printStackTrace();
+    }
   }
 
   private void log(String message) {
