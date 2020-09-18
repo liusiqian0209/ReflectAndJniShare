@@ -48,6 +48,11 @@ public class SubModel extends BaseModel {
   }
 
   @Override
+  public void overrideMethod() {
+    Log.d(TAG, "overrideMethod in SubModel");
+  }
+
+  @Override
   protected void absMethod() {
     Log.d(TAG, "SubModel call absMethod");
   }

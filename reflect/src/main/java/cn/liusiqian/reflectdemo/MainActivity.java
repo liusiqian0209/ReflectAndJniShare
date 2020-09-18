@@ -22,7 +22,8 @@ public class MainActivity extends AppCompatActivity {
 //    testGetMethods();
 //    callStaticAndAbstract();
 //    callVariableParam();
-    setValueForFinalField();
+//    setValueForFinalField();
+    callSuperClassMethodWithSubClassInstance();
   }
 
   /**
@@ -130,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
       Field field = SubModel.class.getDeclaredField("STATIC_FINAL_CONST");
       field.setAccessible(true);
       field.set(null, "new static final value");
-      Object result  = field.get(null);
+      Object result = field.get(null);
       log("result after set:" + result);
       log("origin field:" + SubModel.STATIC_FINAL_CONST);
 
@@ -138,12 +139,27 @@ public class MainActivity extends AppCompatActivity {
       field.setAccessible(true);
       SubModel model = new SubModel();
       field.set(model, "new non-static final value");
-      result  = field.get(model);
+      result = field.get(model);
       log("result after set:" + result);
       log("origin field:" + model.getNonStaticFinalConst());
     } catch (NoSuchFieldException | IllegalAccessException e) {
       e.printStackTrace();
     }
+  }
+
+  /**
+   * 如果子类覆写了基类的方法A，通过基类的Class对象调用getDeclaredMethod()
+   * 得到A对应的Method对象，在调用invoke时传递子类的实例，那么最终调用的是子类的方法A还是基类的方法A？
+   */
+  private void callSuperClassMethodWithSubClassInstance() {
+    try {
+      Method method = BaseModel.class.getDeclaredMethod("overrideMethod");
+      method.setAccessible(true);
+      method.invoke(new SubModel());
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+      e.printStackTrace();
+    }
+
   }
 
   private void log(String message) {

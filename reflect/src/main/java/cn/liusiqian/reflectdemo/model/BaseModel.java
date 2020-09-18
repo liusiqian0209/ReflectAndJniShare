@@ -32,4 +32,8 @@ public class BaseModel extends AbsModel {
   protected void absMethod() {
     Log.d(TAG, "BaseModel call absMethod");
   }
+
+  public void overrideMethod() {
+    Log.d(TAG, "overrideMethod in BaseModel");
+  }
 }
