@@ -3,6 +3,10 @@ package cn.liusiqian.reflectdemo;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -10,7 +14,9 @@ import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 
 import cn.liusiqian.reflectdemo.model.AbsModel;
+import cn.liusiqian.reflectdemo.model.AnnotationModel;
 import cn.liusiqian.reflectdemo.model.BaseModel;
+import cn.liusiqian.reflectdemo.model.MyAnnotation;
 import cn.liusiqian.reflectdemo.model.SubModel;
 
 public class MainActivity extends AppCompatActivity {
@@ -23,7 +29,9 @@ public class MainActivity extends AppCompatActivity {
 //    callStaticAndAbstract();
 //    callVariableParam();
 //    setValueForFinalField();
-    callSuperClassMethodWithSubClassInstance();
+//    callSuperClassMethodWithSubClassInstance();
+//    getAnnotationValue();
+//    getParameterizedType();
   }
 
   /**
@@ -160,6 +168,74 @@ public class MainActivity extends AppCompatActivity {
       e.printStackTrace();
     }
 
+  }
+
+  /**
+   * 如何获取类注解/方法注解的运行时值？
+   */
+  private void getAnnotationValue() {
+    Class<AnnotationModel> cls = AnnotationModel.class;
+    if (cls.isAnnotationPresent(MyAnnotation.class)) {
+      MyAnnotation annotation = cls.getAnnotation(MyAnnotation.class);
+      if (annotation != null) {
+        String value = annotation.value();
+        log("class annotation value:" + value);
+      }
+    }
+
+    try {
+      Field typeField = cls.getDeclaredField("type");
+      if (typeField.isAnnotationPresent(MyAnnotation.class)) {
+        MyAnnotation annotation = typeField.getAnnotation(MyAnnotation.class);
+        if (annotation != null) {
+          log("field type annotation value:" + annotation.value());
+        }
+      }
+    } catch (NoSuchFieldException e) {
+      e.printStackTrace();
+    }
+  }
+
+
+  /**
+   * 如何获得泛型参数/泛型返回值的运行时值？
+   */
+  private void getParameterizedType() {
+    try {
+      Field field = SubModel.class.getField("valueT");
+      log("GenericType:" + field.getGenericType());
+
+      //从父类继承来的对象用getGenericSuperclass()
+      //从接口实现来的对象用getGenericInterfaces()
+      Type type = SubModel.class.getGenericSuperclass();
+      if (type instanceof ParameterizedType) {
+        Type[] types = ((ParameterizedType) type).getActualTypeArguments();
+
+        for (Type t : types) {
+          log("type:" + t);
+        }
+      }
+    } catch (NoSuchFieldException e) {
+      e.printStackTrace();
+    }
+
+
+    //这里的list2是继承ArrayList<Integer>的子类，其父类是ArrayList<Integer>，只有父类/父接口拥有泛型参数才可以获得对应的泛型参数
+    List<Integer> list = new ArrayList<>();
+    List<Integer> list2 = new ArrayList<Integer>() {};
+    getListParameterizedType(list);
+    getListParameterizedType(list2);
+  }
+
+  private void getListParameterizedType(List<Integer> list2) {
+    Type type = list2.getClass().getGenericSuperclass();
+    if (type instanceof ParameterizedType) {
+      Type[] types = ((ParameterizedType) type).getActualTypeArguments();
+
+      for (Type t : types) {
+        log("type:" + t);
+      }
+    }
   }
 
   private void log(String message) {

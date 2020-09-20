@@ -1,5 +1,12 @@
 package cn.liusiqian.reflectdemo.model;
 
-public class AnnotationModel {
+@MyAnnotation("classAnnotation")
+public class AnnotationModel<T> {
+
+  @MyAnnotation
+  private T type;
+
+  public AnnotationModel(T type) {
+  }
 
 }

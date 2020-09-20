@@ -1,8 +1,9 @@
 package cn.liusiqian.reflectdemo.model;
 
 import android.util.Log;
+import android.widget.TextView;
 
-public class SubModel extends BaseModel {
+public class SubModel extends BaseModel<String, TextView> {
   static {
     TAG = "SubModel";
   }

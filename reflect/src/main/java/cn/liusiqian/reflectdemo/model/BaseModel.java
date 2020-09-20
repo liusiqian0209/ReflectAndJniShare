@@ -2,11 +2,15 @@ package cn.liusiqian.reflectdemo.model;
 
 import android.util.Log;
 
-public class BaseModel extends AbsModel {
+public class BaseModel<T, H> extends AbsModel {
 
   static {
     TAG = "BaseModel";
   }
+
+  public T valueT;
+
+  protected H valueH;
 
   private static void staticMethod() {
     Log.d(TAG, "call static method");
