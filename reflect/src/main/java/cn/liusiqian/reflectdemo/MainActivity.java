@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
 //    callSuperClassMethodWithSubClassInstance();
 //    getAnnotationValue();
 //    getParameterizedType();
+//    callConstructorWithUnsafe();
   }
 
   /**
@@ -235,6 +236,26 @@ public class MainActivity extends AppCompatActivity {
       for (Type t : types) {
         log("type:" + t);
       }
+    }
+  }
+
+  /**
+   * 没有默认的构造方法时，如何通过Class对象创建这个类的实例?
+   * 例子：Gson.fromJson()内部实现
+   */
+  private void callConstructorWithUnsafe() {
+    try {
+      Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+      Field field = unsafeClass.getDeclaredField("theUnsafe");
+      field.setAccessible(true);
+      final Object unsafe = field.get(null);
+      final Method allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
+      Object model = allocateInstance.invoke(unsafe, AnnotationModel.class);
+      if (model instanceof AnnotationModel) {
+        log(model.toString());
+      }
+    } catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+      e.printStackTrace();
     }
   }
 

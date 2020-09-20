@@ -9,4 +9,8 @@ public class AnnotationModel<T> {
   public AnnotationModel(T type) {
   }
 
+  @Override
+  public String toString() {
+    return "AnnotationModel::toString()";
+  }
 }
