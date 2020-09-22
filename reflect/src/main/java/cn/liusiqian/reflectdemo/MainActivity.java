@@ -1,5 +1,6 @@
 package cn.liusiqian.reflectdemo;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -18,6 +19,7 @@ import cn.liusiqian.reflectdemo.model.AnnotationModel;
 import cn.liusiqian.reflectdemo.model.BaseModel;
 import cn.liusiqian.reflectdemo.model.MyAnnotation;
 import cn.liusiqian.reflectdemo.model.SubModel;
+import dalvik.system.DexClassLoader;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -33,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
 //    getAnnotationValue();
 //    getParameterizedType();
 //    callConstructorWithUnsafe();
+//    findClassInAnotherLoader();
   }
 
   /**
@@ -255,6 +258,41 @@ public class MainActivity extends AppCompatActivity {
         log(model.toString());
       }
     } catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+      e.printStackTrace();
+    }
+  }
+
+  /**
+   * Class.forName()能否找到同一个进程中不在同一个ClassLoader中的类？
+   */
+  private void findClassInAnotherLoader() {
+    String dexPath = FileUtils.copyFiles(getApplicationContext(), "remote.dex");
+    String cacheDir = FileUtils.getCacheDir(getApplicationContext()).getAbsolutePath();
+    log("dexPath:" + dexPath + "\ncacheDir:" + cacheDir);
+
+    DexClassLoader loader = new DexClassLoader(dexPath, cacheDir, null, getClassLoader());
+    try {
+      Class cls = loader.loadClass("cn.liusiqian.reflectdemo.model.RemoteDexModel");
+      if (cls != null) {
+        Constructor constructor = cls.getConstructor();
+        Object object = constructor.newInstance();
+        Method method = cls.getDeclaredMethod("testMethod");
+        method.invoke(object);
+      }
+    } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+      e.printStackTrace();
+    }
+
+    //尝试用反射寻找 cn.liusiqian.reflectdemo.model.RemoteDexModel
+    try {
+      Class searchCls = Class.forName("cn.liusiqian.reflectdemo.model.RemoteDexModel");
+      if (searchCls != null) {
+        Constructor constructor = searchCls.getConstructor();
+        Object object = constructor.newInstance();
+        Method method = searchCls.getDeclaredMethod("testMethod");
+        method.invoke(object);
+      }
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }
