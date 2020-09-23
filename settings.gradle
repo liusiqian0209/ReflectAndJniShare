@@ -1,2 +1,3 @@
+include ':jnidemo'
 include ':reflect'
 rootProject.name = "ReflectAndJniShare"
