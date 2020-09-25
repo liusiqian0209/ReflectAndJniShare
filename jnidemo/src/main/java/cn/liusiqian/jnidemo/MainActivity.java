@@ -16,6 +16,7 @@ public class MainActivity extends AppCompatActivity {
 
   private TextView tvLoadLib, tvCallHello;
   private TextView tvCalcJava, tvCalcNative;
+  private TextView tvCallDynamic;
 
   private boolean alreadyLoadLibrary;
 
@@ -31,11 +32,13 @@ public class MainActivity extends AppCompatActivity {
     tvCallHello = findViewById(R.id.txt_call_hello);
     tvCalcJava = findViewById(R.id.txt_calc_prime_java);
     tvCalcNative = findViewById(R.id.txt_calc_prime_native);
+    tvCallDynamic = findViewById(R.id.txt_dynamic_native);
 
     tvLoadLib.setOnClickListener(ocl);
     tvCallHello.setOnClickListener(ocl);
     tvCalcJava.setOnClickListener(ocl);
     tvCalcNative.setOnClickListener(ocl);
+    tvCallDynamic.setOnClickListener(ocl);
   }
 
   private View.OnClickListener ocl = new View.OnClickListener() {
@@ -49,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
         callComputePrimeJava();
       } else if (view.getId() == R.id.txt_calc_prime_native) {
         callComputePrimeNative();
+      } else if (view.getId() == R.id.txt_dynamic_native) {
+        dynamicNative("value from Java");
       }
     }
   };
@@ -56,6 +61,9 @@ public class MainActivity extends AppCompatActivity {
   public native String getHelloStr();
 
   public native int countPrimeNative(int target);
+
+  //动态注册的native方法，编译器无法识别出来
+  public native void dynamicNative(String value);
 
   private void loadLibrary() {
     if (!alreadyLoadLibrary) {
@@ -106,6 +114,6 @@ public class MainActivity extends AppCompatActivity {
   }
 
   private void log(String message) {
-    Log.i("JniDemo", message);
+    Log.i("JniDemoTAG", message);
   }
 }

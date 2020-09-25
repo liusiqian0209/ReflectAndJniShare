@@ -22,7 +22,8 @@ Java_cn_liusiqian_jnidemo_MainActivity_getHelloStr(JNIEnv *env, jobject thiz) {
     jmethodID mid_getName = env->GetMethodID(clazz, "getName", "()Ljava/lang/String;");
     // 6. 调用 getName 方法
     jstring name = static_cast<jstring>(env->CallObjectMethod(clazz_instance, mid_getName));
-    LOGI("class name:%s", env->GetStringUTFChars(name, 0));
+    jboolean isCopy;
+    LOGI("class name:%s", env->GetStringUTFChars(name, &isCopy));
 
     return env->NewStringUTF(hello.c_str());
 }
@@ -65,13 +66,27 @@ methodsLength) {
     return JNI_OK;
 }
 
+void DynamicRegistedNativeMethod(JNIEnv *env, jobject thiz, jstring value) {
+    jboolean isCopy;
+    LOGI("native DynamicRegistedNativeMethod -- %s", env->GetStringUTFChars(value, &isCopy));
+}
+
 JNIEXPORT jint JNICALL
-JNI_OnLoad(JavaVM* vm, void* reserved) {
+JNI_OnLoad(JavaVM *vm, void *reserved) {
     LOGI("JNI_OnLoad called");
     //获取JNIEnv
-    JNIEnv* env;
-    if(vm->GetEnv((void **) &env, JNI_VERSION_1_4) != JNI_OK) { //从JavaVM获取JNIEnv，一般使用1.4的版本
+    JNIEnv *env;
+    if (vm->GetEnv((void **) &env, JNI_VERSION_1_4) != JNI_OK) { //从JavaVM获取JNIEnv，一般使用1.4的版本
         return JNI_ERR;
+    }
+
+    if (env != NULL) {
+        if (registerMethods(env, regClassName, regMethods, sizeof(regMethods) / sizeof
+                (JNINativeMethod)) == JNI_OK) {
+            LOGI("dynamic register success!");
+        } else {
+            LOGI("dynamic register failed!");
+        }
     }
 
     return JNI_VERSION_1_6;
