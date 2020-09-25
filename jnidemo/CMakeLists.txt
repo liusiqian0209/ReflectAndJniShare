@@ -11,13 +11,39 @@ cmake_minimum_required(VERSION 3.4.1)
 # automatically packages shared libraries with your APK.
 
 add_library( # Specifies the name of the library.
-             native
+        native
 
-             # Sets the library as a shared library.
-             SHARED
+        # Sets the library as a shared library.
+        SHARED
 
-             # Provides a relative path to your source file(s).
-             src/main/cpp/native.cpp )
+        # Provides a relative path to your source file(s).
+        src/main/cpp/native.cpp)
 
- # Specifies a path to native header files.
+# Specifies a path to native header files.
 include_directories(src/main/cpp/include/)
+
+# 引入Log
+find_library( # Sets the name of the path variable.
+        log-lib
+
+        # Specifies the name of the NDK library that
+        # you want CMake to locate.
+        log)
+
+target_link_libraries(
+        native
+        ${log-lib}
+)
+
+# Release版本隐藏符号
+if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
+    add_definitions("-DLOG_OPEN")
+else ()
+    set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+    set(CMAKE_C_VISIBILITY_PRESET hidden)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
+endif ()
+
+# 导出符号表
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-Map=output.map" CACHE INTERNAL "")

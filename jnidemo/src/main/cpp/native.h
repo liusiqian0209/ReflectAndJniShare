@@ -4,9 +4,13 @@
 
 #include <jni.h>
 #include <string>
+#include <android/log.h>
 
 #ifndef REFLECTANDJNISHARE_NATIVE_H
 #define REFLECTANDJNISHARE_NATIVE_H
+
+#define LOG_TAG "JniDemoTAG_Native"
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_cn_liusiqian_jnidemo_MainActivity_getHelloStr(JNIEnv *, jobject );
@@ -15,7 +19,6 @@ extern "C" JNIEXPORT jint JNICALL
 Java_cn_liusiqian_jnidemo_MainActivity_countPrimeNative(JNIEnv *, jobject, jint );
 
 bool IsPrime(jint);
-
-std::string jstring2str(JNIEnv* env, jstring jstr);
+int registerMethods(JNIEnv *, const char *, const JNINativeMethod *, int);
 
 #endif //REFLECTANDJNISHARE_NATIVE_H
