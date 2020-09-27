@@ -17,6 +17,7 @@ public class MainActivity extends AppCompatActivity {
   private TextView tvLoadLib, tvCallHello;
   private TextView tvCalcJava, tvCalcNative;
   private TextView tvCallDynamic;
+  private TextView tvHelloWorld;
 
   private boolean alreadyLoadLibrary;
 
@@ -33,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     tvCalcJava = findViewById(R.id.txt_calc_prime_java);
     tvCalcNative = findViewById(R.id.txt_calc_prime_native);
     tvCallDynamic = findViewById(R.id.txt_dynamic_native);
+    tvHelloWorld = findViewById(R.id.txt_hello);
 
     tvLoadLib.setOnClickListener(ocl);
     tvCallHello.setOnClickListener(ocl);

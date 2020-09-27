@@ -6,9 +6,12 @@
 
 using namespace std;
 
+int hello_count = 0;
+
 extern "C" JNIEXPORT jstring JNICALL
 Java_cn_liusiqian_jnidemo_MainActivity_getHelloStr(JNIEnv *env, jobject thiz) {
     std::string hello = "Hello World from C++";
+    hello_count++;
 
     // 1. 获取 thiz 的 class，也就是 java 中的 Class 信息
     jclass thisclazz = env->GetObjectClass(thiz);
@@ -19,11 +22,33 @@ Java_cn_liusiqian_jnidemo_MainActivity_getHelloStr(JNIEnv *env, jobject thiz) {
     // 4. 获取 Class 实例
     jclass clazz = env->GetObjectClass(clazz_instance);
     // 5. 根据 class  的 methodID
-    jmethodID mid_getName = env->GetMethodID(clazz, "getName", "()Ljava/lang/String;");
+    jmethodID method_getName = env->GetMethodID(clazz, "getName", "()Ljava/lang/String;");
     // 6. 调用 getName 方法
-    jstring name = static_cast<jstring>(env->CallObjectMethod(clazz_instance, mid_getName));
+    jstring name = static_cast<jstring>(env->CallObjectMethod(clazz_instance, method_getName));
     jboolean isCopy;
     LOGI("class name:%s", env->GetStringUTFChars(name, &isCopy));
+
+    // 获取TextView field
+    jfieldID field_tv_hello = env->GetFieldID(thisclazz, "tvHelloWorld",
+            "Landroid/widget/TextView;");
+    // 获取实例，这里tvHelloWorld在Java中是类私有变量，但依然可以获取到
+    jobject obj_tv_hello = env->GetObjectField(thiz, field_tv_hello);
+    // 调用方法
+    jclass clazz_textview = env->GetObjectClass(obj_tv_hello);
+    jmethodID method_measured_w = env->GetMethodID(clazz_textview, "getMeasuredWidth","()I");
+    jint measured_width = env->CallIntMethod(obj_tv_hello, method_measured_w);
+    LOGI("TextView tvHelloWorld -- measuredWidth:%d", measured_width);
+    // 设置TextView的值
+    jmethodID method_set_text = env->GetMethodID(clazz_textview, "setText", ""
+                                                                            "(Ljava/lang/CharSequence;)V");
+    // format string
+    char * const p_hello_chars = new char[100];
+//    LOGI("size:%ld  hello_count:%d", sizeof(p_hello_chars), hello_count);
+    snprintf(p_hello_chars, 100, "call getHelloStr %d time(s)", hello_count);
+//    LOGI("p_hello_chars:%s", p_hello_chars);
+    env->CallVoidMethod(obj_tv_hello, method_set_text, env->NewStringUTF(p_hello_chars));
+    //delete
+    delete[](p_hello_chars);
 
     return env->NewStringUTF(hello.c_str());
 }
