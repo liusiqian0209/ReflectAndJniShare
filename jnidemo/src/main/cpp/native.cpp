@@ -60,9 +60,25 @@ Java_cn_liusiqian_jnidemo_MainActivity_countPrimeNative(JNIEnv *env, jobject con
         if (IsPrime(i)) {
             count++;
         }
-
     }
     return count;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_cn_liusiqian_jnidemo_MainActivity_setDirectBuffer(JNIEnv *env, jobject context, jobject
+jDirectBuffer, jint capacity) {
+    int *buffer = (int *)env->GetDirectBufferAddress(jDirectBuffer);
+    if (buffer == NULL) {
+        LOGI("Get Direct Buffer Pointer failed!");
+        return;
+    }
+
+    int current = 0;
+    LOGI("capacity = %d" , capacity);
+    for (int i = 0; i < capacity / sizeof(int); i++) {
+        current = buffer[i];
+        LOGI("Get current value: 0x%x", current );
+    }
 }
 
 bool IsPrime(jint num) {

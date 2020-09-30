@@ -1,5 +1,8 @@
 package cn.liusiqian.jnidemo;
 
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -17,6 +20,7 @@ public class MainActivity extends AppCompatActivity {
   private TextView tvLoadLib, tvCallHello;
   private TextView tvCalcJava, tvCalcNative;
   private TextView tvCallDynamic;
+  private TextView tvDirectBuffer;
   private TextView tvHelloWorld;
 
   private boolean alreadyLoadLibrary;
@@ -34,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     tvCalcJava = findViewById(R.id.txt_calc_prime_java);
     tvCalcNative = findViewById(R.id.txt_calc_prime_native);
     tvCallDynamic = findViewById(R.id.txt_dynamic_native);
+    tvDirectBuffer = findViewById(R.id.txt_direct_buffer);
     tvHelloWorld = findViewById(R.id.txt_hello);
 
     tvLoadLib.setOnClickListener(ocl);
@@ -41,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     tvCalcJava.setOnClickListener(ocl);
     tvCalcNative.setOnClickListener(ocl);
     tvCallDynamic.setOnClickListener(ocl);
+    tvDirectBuffer.setOnClickListener(ocl);
   }
 
   private View.OnClickListener ocl = new View.OnClickListener() {
@@ -56,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
         callComputePrimeNative();
       } else if (view.getId() == R.id.txt_dynamic_native) {
         dynamicNative("value from Java");
+      } else if (view.getId() == R.id.txt_direct_buffer) {
+        allocateAndSetDirectBuffer();
       }
     }
   };
@@ -63,6 +71,8 @@ public class MainActivity extends AppCompatActivity {
   public native String getHelloStr();
 
   public native int countPrimeNative(int target);
+
+  public native void setDirectBuffer(Buffer buffer, int capacity);
 
   //动态注册的native方法，编译器无法识别出来
   public native void dynamicNative(String value);
@@ -109,6 +119,16 @@ public class MainActivity extends AppCompatActivity {
     } else {
       showToastShort("native Library not Loaded!");
     }
+  }
+
+  private void allocateAndSetDirectBuffer() {
+    ByteBuffer buffer = ByteBuffer.allocateDirect(20);
+    buffer.putInt(0x11223344);
+    buffer.putInt(0x1357ABCD);
+    buffer.flip();
+    //buffer.capacity()表示 allocate 的总大小
+    //buffer.limit()表示使用的总大小
+    setDirectBuffer(buffer, buffer.limit());
   }
 
   private void showToastShort(CharSequence charSequence) {

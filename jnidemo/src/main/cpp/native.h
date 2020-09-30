@@ -18,6 +18,9 @@ Java_cn_liusiqian_jnidemo_MainActivity_getHelloStr(JNIEnv *, jobject);
 extern "C" JNIEXPORT jint JNICALL
 Java_cn_liusiqian_jnidemo_MainActivity_countPrimeNative(JNIEnv *, jobject, jint);
 
+extern "C" JNIEXPORT void JNICALL
+Java_cn_liusiqian_jnidemo_MainActivity_setDirectBuffer(JNIEnv *, jobject, jobject, jint);
+
 bool IsPrime(jint);
 
 int registerMethods(JNIEnv *, const char *, const JNINativeMethod *, int);
