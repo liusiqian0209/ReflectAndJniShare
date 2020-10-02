@@ -79,6 +79,7 @@ jDirectBuffer, jint capacity) {
         current = buffer[i];
         LOGI("Get current value: 0x%x", current );
     }
+
 }
 
 bool IsPrime(jint num) {
@@ -112,6 +113,11 @@ void DynamicRegistedNativeMethod(JNIEnv *env, jobject thiz, jstring value) {
     LOGI("native DynamicRegistedNativeMethod -- %s", env->GetStringUTFChars(value, &isCopy));
 }
 
+void TriggerCrash(JNIEnv *env, jobject thiz) {
+    int *ptr = NULL;
+    hello_count = ptr[2];
+}
+
 JNIEXPORT jint JNICALL
 JNI_OnLoad(JavaVM *vm, void *reserved) {
     LOGI("JNI_OnLoad called");
@@ -130,5 +136,35 @@ JNI_OnLoad(JavaVM *vm, void *reserved) {
         }
     }
 
+    set_up_global_signal_handler();
+
     return JNI_VERSION_1_6;
+}
+
+void set_up_global_signal_handler() {
+    struct sigaction handler;
+    memset(&handler, 0, sizeof(struct sigaction));
+    handler.sa_sigaction = my_singal_handler;
+    handler.sa_flags = SA_RESETHAND;
+
+    //register signal num
+    #define CATCH_SIG_NUM(NUM) sigaction(NUM, &handler, &old_signalhandlers[NUM])
+
+    CATCH_SIG_NUM(SIGQUIT);
+    CATCH_SIG_NUM(SIGILL);
+    CATCH_SIG_NUM(SIGABRT);
+    CATCH_SIG_NUM(SIGBUS);
+    CATCH_SIG_NUM(SIGFPE);
+    CATCH_SIG_NUM(SIGSEGV);
+    CATCH_SIG_NUM(SIGPIPE);
+    CATCH_SIG_NUM(SIGTERM);
+
+    #undef CATCH_SIG_NUM
+}
+
+void my_singal_handler(int signum, siginfo_t * info, void * reserved) {
+    LOGI("signum: %d", signum);
+
+    //调用原先的处理函数
+    old_signalhandlers[signum].sa_handler(signum);
 }

@@ -21,6 +21,7 @@ public class MainActivity extends AppCompatActivity {
   private TextView tvCalcJava, tvCalcNative;
   private TextView tvCallDynamic;
   private TextView tvDirectBuffer;
+  private TextView tvNativeCrash;
   private TextView tvHelloWorld;
 
   private boolean alreadyLoadLibrary;
@@ -39,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     tvCalcNative = findViewById(R.id.txt_calc_prime_native);
     tvCallDynamic = findViewById(R.id.txt_dynamic_native);
     tvDirectBuffer = findViewById(R.id.txt_direct_buffer);
+    tvNativeCrash = findViewById(R.id.txt_trigger_native_crash);
     tvHelloWorld = findViewById(R.id.txt_hello);
 
     tvLoadLib.setOnClickListener(ocl);
@@ -47,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     tvCalcNative.setOnClickListener(ocl);
     tvCallDynamic.setOnClickListener(ocl);
     tvDirectBuffer.setOnClickListener(ocl);
+    tvNativeCrash.setOnClickListener(ocl);
   }
 
   private View.OnClickListener ocl = new View.OnClickListener() {
@@ -64,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
         dynamicNative("value from Java");
       } else if (view.getId() == R.id.txt_direct_buffer) {
         allocateAndSetDirectBuffer();
+      } else if (view.getId() == R.id.txt_trigger_native_crash) {
+        triggerNativeCrash();
       }
     }
   };
@@ -76,6 +81,8 @@ public class MainActivity extends AppCompatActivity {
 
   //动态注册的native方法，编译器无法识别出来
   public native void dynamicNative(String value);
+
+  public native void triggerNativeCrash();
 
   private void loadLibrary() {
     if (!alreadyLoadLibrary) {

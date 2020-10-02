@@ -5,6 +5,7 @@
 #include <jni.h>
 #include <string>
 #include <android/log.h>
+#include <signal.h>
 
 #ifndef REFLECTANDJNISHARE_NATIVE_H
 #define REFLECTANDJNISHARE_NATIVE_H
@@ -26,10 +27,17 @@ bool IsPrime(jint);
 int registerMethods(JNIEnv *, const char *, const JNINativeMethod *, int);
 
 void DynamicRegistedNativeMethod(JNIEnv *, jobject, jstring);
+void TriggerCrash(JNIEnv *, jobject );
 
 static const char* const regClassName = "cn/liusiqian/jnidemo/MainActivity";
 static const JNINativeMethod regMethods[] = {
-        {"dynamicNative", "(Ljava/lang/String;)V", (void *) DynamicRegistedNativeMethod}
+        {"dynamicNative", "(Ljava/lang/String;)V", (void *) DynamicRegistedNativeMethod},
+        {"triggerNativeCrash", "()V", (void *)TriggerCrash}
 };
+
+// 保存之前的 signal handler
+static struct sigaction old_signalhandlers[NSIG];
+void set_up_global_signal_handler();
+void my_singal_handler(int, siginfo_t *, void *);
 
 #endif //REFLECTANDJNISHARE_NATIVE_H
