@@ -3,10 +3,9 @@
 //
 
 #include "native.h"
+#include "JNIEnvAttachHelper.h"
 
 using namespace std;
-
-int hello_count = 0;
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_cn_liusiqian_jnidemo_MainActivity_getHelloStr(JNIEnv *env, jobject thiz) {
@@ -30,19 +29,19 @@ Java_cn_liusiqian_jnidemo_MainActivity_getHelloStr(JNIEnv *env, jobject thiz) {
 
     // 获取TextView field
     jfieldID field_tv_hello = env->GetFieldID(thisclazz, "tvHelloWorld",
-            "Landroid/widget/TextView;");
+                                              "Landroid/widget/TextView;");
     // 获取实例，这里tvHelloWorld在Java中是类私有变量，但依然可以获取到
     jobject obj_tv_hello = env->GetObjectField(thiz, field_tv_hello);
     // 调用方法
     jclass clazz_textview = env->GetObjectClass(obj_tv_hello);
-    jmethodID method_measured_w = env->GetMethodID(clazz_textview, "getMeasuredWidth","()I");
+    jmethodID method_measured_w = env->GetMethodID(clazz_textview, "getMeasuredWidth", "()I");
     jint measured_width = env->CallIntMethod(obj_tv_hello, method_measured_w);
     LOGI("TextView tvHelloWorld -- measuredWidth:%d", measured_width);
     // 设置TextView的值
     jmethodID method_set_text = env->GetMethodID(clazz_textview, "setText", ""
                                                                             "(Ljava/lang/CharSequence;)V");
     // format string
-    char * const p_hello_chars = new char[100];
+    char *const p_hello_chars = new char[100];
 //    LOGI("size:%ld  hello_count:%d", sizeof(p_hello_chars), hello_count);
     snprintf(p_hello_chars, 100, "call getHelloStr %d time(s)", hello_count);
 //    LOGI("p_hello_chars:%s", p_hello_chars);
@@ -67,17 +66,17 @@ Java_cn_liusiqian_jnidemo_MainActivity_countPrimeNative(JNIEnv *env, jobject con
 extern "C" JNIEXPORT void JNICALL
 Java_cn_liusiqian_jnidemo_MainActivity_setDirectBuffer(JNIEnv *env, jobject context, jobject
 jDirectBuffer, jint capacity) {
-    int *buffer = (int *)env->GetDirectBufferAddress(jDirectBuffer);
+    int *buffer = (int *) env->GetDirectBufferAddress(jDirectBuffer);
     if (buffer == NULL) {
         LOGI("Get Direct Buffer Pointer failed!");
         return;
     }
 
     int current = 0;
-    LOGI("capacity = %d" , capacity);
+    LOGI("capacity = %d", capacity);
     for (int i = 0; i < capacity / sizeof(int); i++) {
         current = buffer[i];
-        LOGI("Get current value: 0x%x", current );
+        LOGI("Get current value: 0x%x", current);
     }
 
 }
@@ -113,17 +112,23 @@ void DynamicRegistedNativeMethod(JNIEnv *env, jobject thiz, jstring value) {
     LOGI("native DynamicRegistedNativeMethod -- %s", env->GetStringUTFChars(value, &isCopy));
 }
 
-void TriggerCrash(JNIEnv *env, jobject thiz) {
-    int *ptr = NULL;
-    hello_count = ptr[2];
+void TriggerCrash(JNIEnv *env, jobject thiz, jboolean main_thread) {
+    if (main_thread) {
+        int *ptr = NULL;
+        hello_count = ptr[2];
+    } else {
+        pthread_create(&my_pthread, NULL, threadRun, NULL);
+    }
 }
 
 JNIEXPORT jint JNICALL
 JNI_OnLoad(JavaVM *vm, void *reserved) {
     LOGI("JNI_OnLoad called");
+    p_javaVM = vm;
+
     //获取JNIEnv
     JNIEnv *env;
-    if (vm->GetEnv((void **) &env, JNI_VERSION_1_4) != JNI_OK) { //从JavaVM获取JNIEnv，一般使用1.4的版本
+    if (vm->GetEnv((void **) &env, JNI_VERSION_1_6) != JNI_OK) { //从JavaVM获取JNIEnv，一般使用1.4的版本
         return JNI_ERR;
     }
 
@@ -157,13 +162,43 @@ void set_up_global_signal_handler() {
     CATCH_SIG_NUM(SIGFPE);
     CATCH_SIG_NUM(SIGSEGV);
     CATCH_SIG_NUM(SIGPIPE);
+    CATCH_SIG_NUM(SIGSTKFLT);
     CATCH_SIG_NUM(SIGTERM);
 
     #undef CATCH_SIG_NUM
 }
 
-void my_singal_handler(int signum, siginfo_t * info, void * reserved) {
+void *threadRun(void *data) {
+
+    LOGI("my_pthread run");
+
+    int *ptr = NULL;
+    hello_count = ptr[2];
+
+    pthread_exit(&my_pthread);
+}
+
+void *threadReport(void *data) {
+
+    int signum = *(int *) data;
+    LOGI("my_report_pthread run  --  signum:%d", signum);
+
+    if (p_javaVM) {
+        JNIEnvAttachHelper helper(p_javaVM);
+
+        //todo:
+    } else {
+        LOGI("JNI Unloaded");
+    }
+
+    pthread_exit(&my_report_pthread);
+}
+
+void my_singal_handler(int signum, siginfo_t *info, void *reserved) {
     LOGI("signum: %d", signum);
+
+    // 创建子线程上报crash
+    pthread_create(&my_report_pthread, NULL, threadReport, &signum);
 
     //调用原先的处理函数
     old_signalhandlers[signum].sa_handler(signum);

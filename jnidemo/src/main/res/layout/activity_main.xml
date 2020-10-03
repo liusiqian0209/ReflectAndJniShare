@@ -65,4 +65,11 @@
     app:layout_constraintTop_toBottomOf="@id/txt_direct_buffer"
     android:text="Trigger Native Crash"/>
 
+  <TextView
+    android:id="@+id/txt_trigger_native_crash_sub_jni_thread"
+    style="@style/ButtonTextStyle"
+    app:layout_constraintLeft_toLeftOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/txt_trigger_native_crash"
+    android:text="Trigger Native Crash Sub Thread"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
