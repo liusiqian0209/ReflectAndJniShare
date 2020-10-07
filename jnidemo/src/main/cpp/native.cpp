@@ -68,7 +68,7 @@ Java_cn_liusiqian_jnidemo_MainActivity_setDirectBuffer(JNIEnv *env, jobject cont
 jDirectBuffer, jint capacity) {
     int *buffer = (int *) env->GetDirectBufferAddress(jDirectBuffer);
     if (buffer == NULL) {
-        LOGI("Get Direct Buffer Pointer failed!");
+        LOGE("Get Direct Buffer Pointer failed!");
         return;
     }
 
@@ -128,16 +128,24 @@ JNI_OnLoad(JavaVM *vm, void *reserved) {
 
     //获取JNIEnv
     JNIEnv *env;
-    if (vm->GetEnv((void **) &env, JNI_VERSION_1_6) != JNI_OK) { //从JavaVM获取JNIEnv，一般使用1.4的版本
+    if (vm->GetEnv((void **) &env, JNI_VERSION_1_6) != JNI_OK) { //从JavaVM获取JNIEnv
         return JNI_ERR;
     }
 
     if (env != NULL) {
-        if (registerMethods(env, regClassName, regMethods, sizeof(regMethods) / sizeof
+        if (registerMethods(env, regClassId, regMethods, sizeof(regMethods) / sizeof
                 (JNINativeMethod)) == JNI_OK) {
             LOGI("dynamic register success!");
         } else {
-            LOGI("dynamic register failed!");
+            LOGE("dynamic register failed!");
+        }
+    }
+
+    if (env != NULL) {
+        if (set_up_class_loader(env) == JNI_OK) {
+            LOGI("set up class loader success");
+        } else {
+            LOGE("set up class loader fail");
         }
     }
 
@@ -168,6 +176,23 @@ void set_up_global_signal_handler() {
     #undef CATCH_SIG_NUM
 }
 
+jint set_up_class_loader(JNIEnv * env) {
+    jclass class_my_application = env->FindClass(applicationClassId);
+    jmethodID method_get_class_loader = env->GetMethodID(class_my_application, "getClassLoader",
+            "()Ljava/lang/ClassLoader;");
+
+    //获取application实例
+    jmethodID method_get_application = env->GetStaticMethodID(class_my_application, "getApp",
+            "()Landroid/app/Application;");
+    jobject application = env->CallStaticObjectMethod(class_my_application, method_get_application);
+
+    //这里要使用Global Reference，否则函数返回之后，指针就失效了
+    //JNIEnv::CallObjectMethod拿到的是Local Reference
+    app_class_loader = env->NewGlobalRef(env->CallObjectMethod(application, method_get_class_loader));
+
+    return app_class_loader == NULL ? JNI_ERR : JNI_OK;
+}
+
 void *threadRun(void *data) {
 
     LOGI("my_pthread run");
@@ -185,19 +210,47 @@ void *threadReport(void *data) {
 
     if (p_javaVM) {
         JNIEnvAttachHelper helper(p_javaVM);
+        jclass class_error_handler = find_class_complete(helper.getEnv(), errHandlerClsId);
+        if (class_error_handler == NULL) {
+            LOGE("Can not get error handler class");
+        } else{
+            jmethodID method_error_callback = helper.getEnv()->GetStaticMethodID(class_error_handler,
+                                                                                 "onNativeError", "(I)V");
+            if (method_error_callback == NULL) {
+                LOGE("Can not get error handler method");
+            } else{
+                LOGI("Call Java callback method to notify native crash");
+                helper.getEnv()->CallStaticVoidMethod(class_error_handler, method_error_callback, signum);
+            }
+        }
 
-        //todo:
     } else {
-        LOGI("JNI Unloaded");
+        LOGE("JNI Unloaded");
     }
 
     pthread_exit(&my_report_pthread);
 }
 
+jclass find_class_complete(JNIEnv * env, const char * clsId) {
+    if (env == NULL) {
+        return NULL;
+    }
+
+    jclass class_loader = env->GetObjectClass(app_class_loader);
+
+    jmethodID method_load_class = env->GetMethodID(class_loader, "loadClass",
+            "(Ljava/lang/String;)Ljava/lang/Class;");
+    jclass cls = static_cast<jclass> (env->CallObjectMethod(app_class_loader, method_load_class,
+            env->NewStringUTF(clsId)));
+    return cls;
+}
+
+
 void my_singal_handler(int signum, siginfo_t *info, void *reserved) {
     LOGI("signum: %d", signum);
 
     // 创建子线程上报crash
+    // 在crash发生的线程上报，部分机型会有回调不到Java层的情况
     pthread_create(&my_report_pthread, NULL, threadReport, &signum);
 
     //调用原先的处理函数
